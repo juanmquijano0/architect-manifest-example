@@ -124,6 +124,20 @@ async function validateManifest() {
     collect(item, 'risks');
     await assertExists(item.path, `manifest risks ${item.id}`);
   }
+
+  const verifyRelated = (item, section) => {
+    for (const relatedId of item.related ?? []) {
+      if (!ids.has(relatedId)) {
+        fail(`manifest ${section} ${item.id}: related ID ${relatedId} is not declared`);
+      }
+    }
+  };
+  for (const section of ['documents', 'diagrams', 'adrs', 'apis', 'events', 'dataStores', 'components', 'qualityAttributes', 'implementationConstraints']) {
+    for (const item of manifest[section] ?? []) verifyRelated(item, section);
+  }
+  for (const item of manifest.risks ?? []) {
+    if (!ids.has(item.related)) fail(`manifest risks ${item.id}: related ID ${item.related} is not declared`);
+  }
 }
 
 async function validateOpenApi() {

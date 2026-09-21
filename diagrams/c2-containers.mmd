@@ -5,7 +5,7 @@ flowchart LR
   catalog["Product Catalog API"]
   db[("DATA-ORDERS\nDynamoDB table + stream")]
   stream["DynamoDB Streams"]
-  publisher["CMP-OUTBOX-PUBLISHER\nStream consumer"]
+  publisher["CMP-OUTBOX-PUBLISHER\nLambda outbox publisher"]
   bus["EventBridge\nDomain event bus"]
   fq[("Fulfillment SQS Queue\nwith DLQ")]
   nq[("Notification SQS Queue\nwith DLQ")]
@@ -19,4 +19,3 @@ flowchart LR
   db --> stream --> publisher --> bus
   bus --> fq --> fulfillment --> db
   bus --> nq --> notification --> provider
-

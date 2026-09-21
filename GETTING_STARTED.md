@@ -16,11 +16,11 @@ La decision que no debes inferir solo del diagrama: el diagrama no define protoc
 
 ## 3. Container View
 
-Abre [c2-containers.mmd](/diagrams/c2-containers.mmd). `Order API` recibe HTTP, DynamoDB guarda ordenes, DynamoDB Streams dispara publicacion confiable, EventBridge enruta eventos y SQS desacopla workers.
+Abre [c2-containers.mmd](/diagrams/c2-containers.mmd). `Order API` recibe HTTP, DynamoDB guarda ordenes, DynamoDB Streams invoca una Lambda outbox publisher para publicacion confiable, EventBridge enruta eventos y SQS desacopla workers.
 
 ## 4. Component View
 
-Abre [06-components.md](/docs/architecture/06-components.md). `OrderController` valida el contrato HTTP, `CatalogClient` llama al catalogo, `OrderRepository` persiste con conditional writes y `OutboxPublisher` publica eventos derivados del stream.
+Abre [06-components.md](/docs/architecture/06-components.md). `OrderController` valida el contrato HTTP, `CatalogClient` llama al catalogo y `OrderRepository` persiste con conditional writes. La publicacion de eventos derivados del stream ocurre fuera del Order API, en `CMP-OUTBOX-PUBLISHER`.
 
 ## 5. Sequence: Happy Path
 
@@ -39,7 +39,7 @@ El contrato fuente es [contracts/openapi/orders-api.yaml](/contracts/openapi/ord
 
 ## 7. DynamoDB Access Pattern
 
-En [09-data-architecture.md](/docs/architecture/09-data-architecture.md), `AP-001` y `AP-002` derivan el modelo. La tabla usa `PK = ORDER#<orderId>` y `SK` para separar metadata, items, idempotency records y processed events.
+En [09-data-architecture.md](/docs/architecture/09-data-architecture.md), `AP-001`, `AP-002` y `AP-006` derivan el modelo. La tabla usa `PK = ORDER#<orderId>` para metadata/items/processed events y `PK = IDEMPOTENCY#<key>` para resolver retries de create order sin conocer previamente el `orderId`.
 
 ## 8. Event Contract
 
@@ -47,7 +47,7 @@ Cuando una orden se acepta, el sistema produce `EVT-ORDER-CREATED-V1` con tipo `
 
 ## 9. Worker, Retry And Idempotency
 
-`Fulfillment Worker` consume el evento desde SQS. Si recibe el mismo evento dos veces, revisa `PROCESSED_EVENT#<eventId>` antes de aplicar efectos. Si falla despues de comenzar, SQS redelivery y conditional writes evitan transiciones invalidas.
+`Fulfillment Worker` consume el evento desde SQS. Si recibe el mismo evento dos veces, usa `PROCESSED_EVENT#<eventId>` dentro de la misma transaccion que cambia estado. `Notification Worker` usa una key estable de deduplicacion con el proveedor; sin soporte del proveedor, solo puede ofrecer at-least-once notification attempts.
 
 Revisa [10-consistency-and-idempotency.md](/docs/architecture/10-consistency-and-idempotency.md) y [11-resilience.md](/docs/architecture/11-resilience.md).
 
@@ -64,4 +64,3 @@ La historia termina conectando decisiones:
 - [ADR-0006](/decisions/ADR-0006-use-dynamodb-streams-for-reliable-event-publication.md) explica publicacion confiable.
 
 Con eso viste como requirement, diagramas, contrato, datos, eventos, resiliencia y ADRs forman una sola arquitectura.
-

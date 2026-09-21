@@ -2,7 +2,7 @@
 
 `OrderFlow` es un sistema ficticio de procesamiento de ordenes para `Acme Retail`. Permite que un cliente autenticado cree una orden, consulte su estado y reciba una notificacion cuando el procesamiento termina.
 
-Este manifesto separa decisiones conceptuales de decisiones especificas de AWS. La arquitectura concreta usa API Gateway, ECS/Fargate, DynamoDB, DynamoDB Streams, EventBridge, SQS, CloudWatch/OpenTelemetry, Secrets Manager, KMS e IAM. Estas tecnologias son una referencia pedagogica, no la unica arquitectura correcta.
+Este manifesto separa decisiones conceptuales de decisiones especificas de AWS. La arquitectura concreta usa API Gateway, ECS/Fargate, Lambda, DynamoDB, DynamoDB Streams, EventBridge, SQS, CloudWatch/OpenTelemetry, Secrets Manager, KMS e IAM. Estas tecnologias son una referencia pedagogica, no la unica arquitectura correcta.
 
 ## Normative Language
 
@@ -23,7 +23,7 @@ No dupliques contratos completos en Markdown. Enlazalos y explica las decisiones
 
 ## Solution Summary
 
-OrderFlow acepta ordenes por HTTP, valida productos contra un `Product Catalog API` externo, persiste una orden aceptada en DynamoDB y publica eventos de dominio de forma confiable usando DynamoDB Streams como salida transaccional. EventBridge enruta eventos hacia colas SQS. `Fulfillment Worker` procesa la orden y la mueve a `FULFILLED` o `REJECTED`. `Notification Worker` consume eventos terminales y llama a un `Notification Provider` externo.
+OrderFlow acepta ordenes por HTTP, valida productos contra un `Product Catalog API` externo, persiste una orden aceptada en DynamoDB y publica eventos de dominio de forma confiable usando DynamoDB Streams con una Lambda outbox publisher. EventBridge enruta eventos hacia colas SQS. `Fulfillment Worker` procesa la orden y la mueve a `FULFILLED` o `REJECTED`. `Notification Worker` consume eventos terminales y llama a un `Notification Provider` externo con una key estable de deduplicacion.
 
 Pagos esta deliberadamente fuera del alcance. Esta V1 busca mantener el dominio pequeno para concentrarse en contratos, datos, consistencia, resiliencia y handoff.
 
@@ -78,4 +78,3 @@ If any required architectural decision is missing or contradictory, stop and rep
 Cambios a contratos deben modificar la fuente machine-readable y sus ejemplos. Cambios significativos de arquitectura deben agregar o actualizar ADRs. Nuevos riesgos u open questions deben tener ID, owner role y etapa objetivo de resolucion.
 
 Una arquitectura lista para implementar no esta completa para siempre. Esta lista para que el equipo pueda construir sin inventar decisiones estructurales.
-

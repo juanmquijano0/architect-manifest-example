@@ -6,11 +6,12 @@
 
 | ID | Pattern | Consistency | Notes |
 | --- | --- | --- | --- |
-| AP-001 | Create order | Conditional write | Create `ORDER` and `IDEMPOTENCY` records atomically. |
+| AP-001 | Create order | Transactional conditional write | Create `ORDER`, `ITEM` and top-level `IDEMPOTENCY` records atomically. |
 | AP-002 | Get order by `orderId` | Strongly consistent for immediate read; eventual acceptable later | Read `ORDER` and `ITEM` records by partition. |
 | AP-003 | Get order items | Same partition query | No GSI needed. |
 | AP-004 | Update order status conditionally | Conditional write | Requires expected state and version. |
 | AP-005 | Detect processed event | Conditional write/read | Prevent duplicate worker effects. |
+| AP-006 | Resolve create-order retry by `Idempotency-Key` | Strongly consistent read | Read `PK = IDEMPOTENCY#<idempotencyKey>` before creating another order. |
 
 ### DynamoDB Model
 
@@ -56,14 +57,19 @@ Item types:
 
 ```json
 {
-  "PK": "ORDER#ord_01HXYZ",
-  "SK": "IDEMPOTENCY#idem_789",
+  "PK": "IDEMPOTENCY#idem_789",
+  "SK": "IDEMPOTENCY",
   "entityType": "IDEMPOTENCY_RECORD",
+  "idempotencyKey": "idem_789",
+  "orderId": "ord_01HXYZ",
   "requestHash": "sha256:...",
   "responseStatus": 201,
+  "responseBodyRef": "ORDER#ord_01HXYZ",
   "expiresAt": 1790000000
 }
 ```
+
+`POST /orders` creation uses a DynamoDB transaction with conditional puts for the order metadata, order items and the idempotency record. The idempotency record is keyed by `Idempotency-Key`, not by `orderId`, because a retry arrives before the client necessarily knows the generated order ID.
 
 ```json
 {
@@ -75,9 +81,11 @@ Item types:
 }
 ```
 
+For `CMP-NOTIFICATION-WORKER`, a processed/success record is written only after the provider confirms the notification. Retries use the same provider deduplication key, so a crash after provider success but before local recording can be retried without intentionally creating a second customer notification when `ASM-002` holds.
+
 Ownership: `DATA-ORDERS` is owned by OrderFlow. Other systems `MUST NOT` write directly to the table.
 
-Lifecycle: order records retained 400 days in this example. Idempotency records use TTL after 24 hours. Processed-event records use TTL after 30 days unless audit needs change.
+Lifecycle: for this reference example, `400 days` is an illustrative retention assumption for completed order records so cost and lifecycle can be discussed. `OPEN-002` remains the explicit question a real project must resolve before production design. Idempotency records use TTL after 24 hours. Processed-event records use TTL after 30 days unless audit needs change.
 
 Durability/security: PITR enabled, AWS-managed regional durability, KMS encryption at rest, least-privilege IAM.
 
@@ -102,4 +110,3 @@ The architect defines access patterns, keys, item types, consistency and lifecyc
 **Common mistakes:** adding GSIs "just in case"; skipping conditional writes; hiding TTL/retention.
 
 **Implementation handoff:** developers can implement repository behavior and know where not to add ad hoc queries.
-

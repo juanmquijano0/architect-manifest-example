@@ -5,7 +5,7 @@ flowchart TB
     end
     subgraph compute["Private compute boundary"]
       orderApi["ECS Service: Order API"]
-      outbox["ECS Task: Outbox Publisher"]
+      outbox["Lambda: Outbox Publisher"]
       fulfill["ECS Service: Fulfillment Worker"]
       notify["ECS Service: Notification Worker"]
     end
@@ -27,11 +27,12 @@ flowchart TB
   orderApi --> secrets
   notify --> secrets
   iam -. authorizes .- orderApi
+  iam -. authorizes .- outbox
   iam -. authorizes .- fulfill
   iam -. authorizes .- notify
   kms -. encrypts .- dynamo
   kms -. encrypts .- secrets
   orderApi --> obs
+  outbox --> obs
   fulfill --> obs
   notify --> obs
-

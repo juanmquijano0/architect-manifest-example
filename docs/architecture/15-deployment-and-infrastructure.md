@@ -10,10 +10,11 @@ Deployment view includes:
 
 - API Gateway / HTTP entry.
 - ECS/Fargate services for Order API and workers.
+- Lambda function for DynamoDB Streams to EventBridge publication.
 - DynamoDB Orders table with streams enabled.
 - EventBridge bus.
 - SQS queues and DLQs.
-- IAM roles per task.
+- IAM roles per task/function.
 - Secrets Manager for external credentials.
 - KMS keys for encryption.
 - CloudWatch/OpenTelemetry collector/export path.
@@ -35,4 +36,3 @@ Architecture decides trust boundaries, managed service choices, encryption expec
 **Common mistakes:** mixing deployment with C4 container view; leaving IAM or secrets invisible.
 
 **Implementation handoff:** Platform can build IaC without guessing major topology.
-

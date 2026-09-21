@@ -10,6 +10,7 @@ Metrics:
 
 - request rate, error rate, latency.
 - DynamoDB throttling/system errors.
+- DynamoDB stream iterator age and Lambda outbox publish failures.
 - queue depth and age of oldest message.
 - DLQ messages.
 - worker processing duration.
@@ -40,4 +41,3 @@ Example SLI/SLO:
 **Common mistakes:** saying "good observability"; missing correlation across async hops.
 
 **Implementation handoff:** teams can instrument services and build meaningful alarms.
-

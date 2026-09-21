@@ -13,7 +13,7 @@ Authentication: `API-ORDERS-V1` requires OIDC/JWT. Tokens are validated at API e
 
 Authorization: caller can access only its own customer orders. Implementation must map authenticated subject to `customerId`; clients `MUST NOT` submit arbitrary `customerId` for another account.
 
-Service identities: ECS tasks use IAM roles with least privilege. Workers can read their queues and update only required DynamoDB items.
+Service identities: ECS tasks and the Lambda outbox publisher use IAM roles with least privilege. Workers can read their queues and update only required DynamoDB items. The outbox publisher can read the DynamoDB stream and publish only to the OrderFlow EventBridge bus.
 
 Encryption: TLS in transit; DynamoDB, SQS, EventBridge archives if used, and secrets encrypted with KMS.
 
@@ -49,4 +49,3 @@ Security decision vs implementation detail: requiring OIDC scopes is an architec
 **Common mistakes:** treating security as a later checklist; logging payloads for convenience.
 
 **Implementation handoff:** developers know mandatory controls and where Security must review.
-

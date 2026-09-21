@@ -15,20 +15,21 @@ After creating an order, OrderFlow must publish `order.created.v1`. Writing Dyna
 ## Options Considered
 
 - Publish to EventBridge directly after DynamoDB write.
-- Use DynamoDB Streams and an outbox-style publisher.
+- Use DynamoDB Streams and a Lambda outbox-style publisher.
+- Use DynamoDB Streams and an ECS stream consumer.
 - Store an explicit outbox table in a relational database.
 
 ## Decision
 
-Enable DynamoDB Streams on `DATA-ORDERS` and use `CMP-OUTBOX-PUBLISHER` to publish domain events to EventBridge from stream records.
+Enable DynamoDB Streams on `DATA-ORDERS` and implement `CMP-OUTBOX-PUBLISHER` as Lambda to publish domain events to EventBridge from stream records.
 
 ## Consequences
 
-Event publication is eventually consistent. The publisher must be idempotent and observable.
+Event publication is eventually consistent. Lambda event-source mapping handles stream shard polling and checkpointing, reducing custom operational logic. The publisher must still be idempotent and observable.
 
 ## Risks / Trade-offs
 
-Stream processing adds operational complexity and requires careful event mapping. It avoids the more serious dual-write gap.
+Stream processing adds operational complexity and requires careful event mapping. Lambda has execution limits and batch-failure behavior that Platform/SRE must configure. It avoids the more serious dual-write gap and is simpler for this reference example than documenting custom ECS shard coordination.
 
 ## Related Artifacts
 
@@ -36,4 +37,3 @@ Stream processing adds operational complexity and requires careful event mapping
 - [sequence-create-order.mmd](/diagrams/sequence-create-order.mmd)
 
 Supersedes: none. Superseded-by: none.
-

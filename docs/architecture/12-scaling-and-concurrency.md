@@ -19,9 +19,13 @@ Illustrative settings:
 - maximum scale: 20 tasks until downstream capacity is proven.
 - backpressure: stop increasing consumers when DynamoDB throttling or fulfillment dependency errors exceed threshold.
 
+### Outbox Publisher
+
+`CMP-OUTBOX-PUBLISHER` runs as Lambda from DynamoDB Streams. Scaling follows stream shards and Lambda event-source mapping concurrency, not ECS task count. Architecture relies on AWS-managed shard polling, checkpointing and retry mechanics; Platform/SRE still configures batch size, maximum record age, bisect-on-error or partial batch response, and on-failure destination.
+
 ### Notification Worker
 
-Notification Worker uses lower concurrency to respect provider rate limits. Scaling `MUST` cap requests to the provider. More consumers can make an outage worse by amplifying retries.
+Notification Worker uses lower concurrency to respect provider rate limits. Scaling `MUST` cap requests to the provider. More consumers can make an outage worse by amplifying retries. With the policy in [11-resilience.md](/docs/architecture/11-resilience.md), one message can make at most one provider call per receive and five calls total before DLQ.
 
 ## How To Use This In A Real Project
 
@@ -38,4 +42,3 @@ Notification Worker uses lower concurrency to respect provider rate limits. Scal
 **Common mistakes:** autoscale workers by CPU only; no max scale; no downstream protection.
 
 **Implementation handoff:** teams know which metrics drive scaling and what must be load tested.
-

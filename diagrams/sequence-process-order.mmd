@@ -11,12 +11,11 @@ sequenceDiagram
 
   E->>Q: order.created.v1
   Q->>W: Deliver message
-  W->>D: Conditional write PROCESSED_EVENT and RECEIVED->PROCESSING
+  W->>D: Conditional update RECEIVED->PROCESSING
   W->>W: Process fulfillment
-  W->>D: Conditional update PROCESSING->FULFILLED or REJECTED
-  D-->>EB: Terminal event via stream/outbox
+  W->>D: Transaction: terminal state + PROCESSED_EVENT
+  D-->>EB: Terminal event via stream/Lambda outbox
   EB->>NQ: order.fulfilled.v1 or order.rejected.v1
   NQ->>N: Deliver message
-  N->>D: Record processed event
-  N->>NP: Send notification with duplicate suppression key
-
+  N->>NP: Send notification with stable deduplication key
+  N->>D: Record notification success for eventId

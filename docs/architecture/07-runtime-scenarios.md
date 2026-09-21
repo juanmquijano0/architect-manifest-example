@@ -10,19 +10,19 @@ Source diagrams:
 
 ### Create Order Happy Path
 
-Client sends `POST /orders` with JWT, `X-Correlation-Id` and `Idempotency-Key`. Order API validates input, calls Product Catalog with a 300 ms timeout and one retry for retryable 5xx/connectivity failures, stores order as `RECEIVED`, and returns `201`. DynamoDB Streams later drives event publication.
+Client sends `POST /orders` with JWT, `X-Correlation-Id` and `Idempotency-Key`. Order API validates input, calls Product Catalog with a 300 ms per-attempt timeout and one retry for retryable 5xx/connectivity failures, stores order as `RECEIVED`, stores an idempotency record addressable by the key, and returns `201`. DynamoDB Streams later invokes `CMP-OUTBOX-PUBLISHER` as a Lambda publisher for EventBridge.
 
 ### Client Retry
 
-If the same client retries with the same `Idempotency-Key` and equivalent request body, Order API `MUST` return the original result. If the same key is reused with a different body hash, Order API `MUST` return `409 IDEMPOTENCY_KEY_REUSED`.
+If the same client retries with the same `Idempotency-Key`, Order API reads `PK = IDEMPOTENCY#<key>`. Same key plus equivalent request hash returns the previous `orderId` and result. Same key plus different body hash returns `409 IDEMPOTENCY_KEY_REUSED`.
 
 ### Catalog Unavailable
 
-Order API uses timeout 300 ms, max 2 total attempts, exponential backoff starting at 50 ms plus jitter. If catalog still fails, Order API returns `503 CATALOG_UNAVAILABLE`. No order is persisted.
+Order API uses timeout 300 ms per attempt, max 2 total attempts, exponential backoff starting at 50 ms plus jitter. If catalog still fails, Order API returns `503 CATALOG_UNAVAILABLE`. No order or idempotency success record is persisted.
 
 ### Duplicate Event
 
-Workers `MUST` treat event delivery as at-least-once. Before applying side effects, a worker writes `PROCESSED_EVENT#<eventId>` conditionally. Duplicate events produce no duplicate state transition or notification.
+Workers `MUST` treat event delivery as at-least-once. For DynamoDB-only effects, a worker records `PROCESSED_EVENT#<eventId>` in the same conditional transaction as the state change. For external notification, the worker `MUST` use a stable provider idempotency/deduplication key derived from `eventId`; it records local success only after the provider confirms. Duplicate delivery may repeat the provider call, but with the same key.
 
 ### Worker Crash
 
@@ -38,7 +38,7 @@ Fulfillment scales by backlog per task and age of oldest message, not CPU alone.
 
 ### Notification Provider Unavailable
 
-The order remains `FULFILLED` or `REJECTED`. Notification failure `MUST NOT` revert order state. Notification Worker retries independently and may DLQ the notification message.
+The order remains `FULFILLED` or `REJECTED`. Notification failure `MUST NOT` revert order state. Notification Worker performs at most one provider call per SQS receive, using the same provider idempotency key on every retry. If the provider does not support deduplication, OrderFlow can only guarantee at-least-once notification attempts and duplicate customer notifications become possible; that must be resolved before production use.
 
 ### Concurrent Updates
 
@@ -59,4 +59,3 @@ State changes use conditional writes: current state must match allowed previous 
 **Common mistakes:** documenting only happy path; saying "retry when needed" without limits.
 
 **Implementation handoff:** developers can implement concrete behavior without inventing failure semantics.
-

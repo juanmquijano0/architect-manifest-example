@@ -1,0 +1,211 @@
+manifestVersion: 0.1.0
+solution:
+  id: SOL-ORDERFLOW
+  name: OrderFlow
+  status: reference-example
+owners:
+  - role: Solution Architect
+    responsibility: Owns architectural coherence and trade-off documentation.
+  - role: Tech Lead
+    responsibility: Owns implementation feasibility and component design.
+  - role: DBA / Data specialist
+    responsibility: Reviews DynamoDB access patterns and lifecycle decisions.
+  - role: Security
+    responsibility: Reviews threat model, auth, secrets, IAM and logging controls.
+  - role: Platform / SRE
+    responsibility: Reviews deployment, scaling, SLOs, alerts and operability.
+domain: Retail order processing
+repositoryPurpose: Public fictitious educational reference for an Architect Manifest.
+lastReviewed: '2026-09-21'
+documents:
+  - id: DOC-ARCH-MANIFEST
+    title: Architecture Manifest entry point
+    path: ARCHITECTURE_MANIFEST.md
+  - id: DOC-GETTING-STARTED
+    title: Create order guided walkthrough
+    path: GETTING_STARTED.md
+  - id: DOC-CONTEXT-GOALS
+    title: Context and goals
+    path: docs/architecture/01-context-and-goals.md
+  - id: DOC-DATA-ARCH
+    title: Data architecture
+    path: docs/architecture/09-data-architecture.md
+  - id: DOC-CONSISTENCY
+    title: Consistency and idempotency
+    path: docs/architecture/10-consistency-and-idempotency.md
+  - id: DOC-ACCEPTANCE
+    title: Architecture acceptance
+    path: docs/architecture/20-architecture-acceptance.md
+diagrams:
+  - id: DIA-C1-CONTEXT
+    title: C1 System Context
+    path: diagrams/c1-system-context.mmd
+  - id: DIA-C2-CONTAINERS
+    title: C2 Containers
+    path: diagrams/c2-containers.mmd
+  - id: DIA-C3-ORDER-API
+    title: C3 Order API Components
+    path: diagrams/c3-order-api-components.mmd
+  - id: DIA-DEPLOYMENT
+    title: Deployment view
+    path: diagrams/deployment.mmd
+  - id: DIA-SEQ-CREATE-ORDER
+    title: Create order happy path
+    path: diagrams/sequence-create-order.mmd
+  - id: DIA-SEQ-PROCESS-ORDER
+    title: Process order
+    path: diagrams/sequence-process-order.mmd
+  - id: DIA-SEQ-FAILURE-DLQ
+    title: Failure retry and DLQ
+    path: diagrams/sequence-failure-retry-dlq.mmd
+  - id: DIA-ORDER-STATE
+    title: Order state machine
+    path: diagrams/order-state-machine.mmd
+adrs:
+  - id: ADR-0001
+    title: Use DynamoDB for orders
+    status: accepted
+    path: decisions/ADR-0001-use-dynamodb-for-orders.md
+  - id: ADR-0002
+    title: Use REST for public Order API
+    status: accepted
+    path: decisions/ADR-0002-use-rest-for-public-order-api.md
+  - id: ADR-0003
+    title: Use events for post-order processing
+    status: accepted
+    path: decisions/ADR-0003-use-events-for-post-order-processing.md
+  - id: ADR-0004
+    title: Use EventBridge and SQS
+    status: accepted
+    path: decisions/ADR-0004-use-eventbridge-and-sqs.md
+  - id: ADR-0005
+    title: Use Idempotency-Key for order creation
+    status: accepted
+    path: decisions/ADR-0005-use-idempotency-key-for-order-creation.md
+  - id: ADR-0006
+    title: Use DynamoDB Streams for reliable event publication
+    status: accepted
+    path: decisions/ADR-0006-use-dynamodb-streams-for-reliable-event-publication.md
+apis:
+  - id: API-ORDERS-V1
+    title: Orders HTTP API
+    path: contracts/openapi/orders-api.yaml
+    related: [CMP-ORDER-API, ADR-0002, ADR-0005]
+events:
+  - id: EVT-ORDER-CREATED-V1
+    title: order.created.v1
+    path: contracts/schemas/order-created.v1.schema.json
+    related: [CMP-ORDER-API, CMP-FULFILLMENT-WORKER]
+  - id: EVT-ORDER-FULFILLED-V1
+    title: order.fulfilled.v1
+    path: contracts/schemas/order-fulfilled.v1.schema.json
+    related: [CMP-FULFILLMENT-WORKER, CMP-NOTIFICATION-WORKER]
+  - id: EVT-ORDER-REJECTED-V1
+    title: order.rejected.v1
+    path: contracts/schemas/order-rejected.v1.schema.json
+    related: [CMP-FULFILLMENT-WORKER, CMP-NOTIFICATION-WORKER]
+dataStores:
+  - id: DATA-ORDERS
+    title: OrderFlowOrders DynamoDB table
+    path: docs/architecture/09-data-architecture.md
+    related: [ADR-0001, ADR-0006]
+components:
+  - id: CMP-ORDER-API
+    title: Order API
+    path: docs/architecture/06-components.md
+    related: [API-ORDERS-V1, DATA-ORDERS]
+  - id: CMP-OUTBOX-PUBLISHER
+    title: Lambda Outbox Publisher
+    path: docs/architecture/05-containers.md
+    related: [ADR-0006]
+  - id: CMP-FULFILLMENT-WORKER
+    title: Fulfillment Worker
+    path: docs/architecture/05-containers.md
+    related: [EVT-ORDER-CREATED-V1, DATA-ORDERS]
+  - id: CMP-NOTIFICATION-WORKER
+    title: Notification Worker
+    path: docs/architecture/05-containers.md
+    related: [EVT-ORDER-FULFILLED-V1, EVT-ORDER-REJECTED-V1]
+qualityAttributes:
+  - id: NFR-AVAILABILITY-001
+    title: Order API availability
+    path: docs/architecture/03-quality-attributes.md
+    related: [CMP-ORDER-API]
+  - id: NFR-PERF-001
+    title: Create order latency
+    path: docs/architecture/03-quality-attributes.md
+    related: [API-ORDERS-V1]
+  - id: NFR-PERF-002
+    title: Fulfillment queue latency
+    path: docs/architecture/03-quality-attributes.md
+    related: [CMP-FULFILLMENT-WORKER]
+  - id: NFR-PERF-003
+    title: Product Catalog dependency latency budget
+    path: docs/architecture/03-quality-attributes.md
+    related: [CMP-ORDER-API]
+  - id: NFR-DURABILITY-001
+    title: Accepted order durability
+    path: docs/architecture/03-quality-attributes.md
+    related: [DATA-ORDERS]
+  - id: NFR-SEC-001
+    title: Authenticated API access
+    path: docs/architecture/03-quality-attributes.md
+    related: [API-ORDERS-V1]
+  - id: NFR-OBS-001
+    title: End-to-end traceability
+    path: docs/architecture/03-quality-attributes.md
+    related: [CMP-ORDER-API, CMP-FULFILLMENT-WORKER, CMP-NOTIFICATION-WORKER]
+  - id: NFR-COST-001
+    title: Cost-aware scaling
+    path: docs/architecture/03-quality-attributes.md
+    related: [CMP-FULFILLMENT-WORKER, CMP-NOTIFICATION-WORKER]
+openQuestions:
+  - id: OPEN-001
+    question: What is the real notification provider rate limit per environment?
+    ownerRole: Platform / SRE
+    blocking: false
+    targetResolutionStage: Before load test
+    path: docs/architecture/19-risks-and-open-questions.md
+  - id: OPEN-002
+    question: What retention period is required for completed orders?
+    ownerRole: Product / Business
+    blocking: false
+    targetResolutionStage: Before production design
+    path: docs/architecture/19-risks-and-open-questions.md
+risks:
+  - id: RISK-001
+    description: Catalog latency dominates create order latency.
+    impact: Medium
+    likelihood: Medium
+    mitigation: Timeout, bounded retry and catalog SLO review.
+    ownerRole: Tech Lead
+    related: CMP-ORDER-API
+    path: docs/architecture/19-risks-and-open-questions.md
+  - id: RISK-002
+    description: Notification provider throttling causes DLQ growth.
+    impact: Medium operational impact
+    likelihood: Medium
+    mitigation: Rate-aware scaling, DLQ alarm and replay process.
+    ownerRole: Platform / SRE
+    related: CMP-NOTIFICATION-WORKER
+    path: docs/architecture/19-risks-and-open-questions.md
+  - id: RISK-003
+    description: Future query needs require new DynamoDB access patterns.
+    impact: Medium
+    likelihood: Medium
+    mitigation: No speculative GSIs; add ADR when required.
+    ownerRole: DBA / Data specialist
+    related: DATA-ORDERS
+    path: docs/architecture/19-risks-and-open-questions.md
+implementationConstraints:
+  - id: CONSTRAINT-AWS-REFERENCE
+    title: AWS reference implementation
+    path: docs/architecture/02-scope-and-constraints.md
+    related: [ADR-0001, ADR-0004]
+  - id: CONSTRAINT-AT-LEAST-ONCE
+    title: Events use at-least-once delivery assumptions
+    path: docs/architecture/10-consistency-and-idempotency.md
+    related: [ADR-0003, ADR-0004]
+  - id: CONSTRAINT-NO-PAYMENTS
+    title: Payments are out of scope
+    path: docs/architecture/02-scope-and-constraints.md

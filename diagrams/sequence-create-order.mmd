@@ -6,7 +6,7 @@ sequenceDiagram
   participant P as Product Catalog API
   participant D as DynamoDB Orders
   participant S as DynamoDB Streams
-  participant O as Outbox Publisher
+  participant O as Lambda Outbox Publisher
   participant E as EventBridge
 
   C->>G: POST /orders + JWT + Idempotency-Key
@@ -18,6 +18,5 @@ sequenceDiagram
   D-->>A: Persisted
   A-->>C: 201 Created
   D-->>S: Stream record
-  S->>O: Order persisted change
+  S->>O: Invoke with stream record
   O->>E: Publish order.created.v1
-

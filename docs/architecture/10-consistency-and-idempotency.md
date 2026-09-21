@@ -25,9 +25,9 @@ Invalid transitions:
 - `RECEIVED -> FULFILLED` `MUST NOT` skip processing.
 - `REJECTED -> FULFILLED` `MUST NOT` occur.
 
-Duplicate requests: `POST /orders` stores `Idempotency-Key`, request hash and response. Same key plus same hash returns original result. Same key plus different hash returns `409`.
+Duplicate requests: `POST /orders` stores `Idempotency-Key`, request hash, `orderId` and response metadata in `PK = IDEMPOTENCY#<key>`. Same key plus same hash returns the original result. Same key plus different hash returns `409`.
 
-Duplicate events: workers conditionally write `PROCESSED_EVENT#<eventId>` before non-idempotent side effects. Duplicate records cause no-op.
+Duplicate events: workers do not claim exactly-once. For effects fully contained in DynamoDB, workers write `PROCESSED_EVENT#<eventId>` in the same conditional transaction as the state transition. For external notification, the local processed marker is written only after provider success, and every retry uses the same provider idempotency/deduplication key. If the provider cannot deduplicate, the architecture only guarantees at-least-once notification attempts; duplicate notifications are possible and `ASM-002` must be resolved.
 
 Ordering: per-order state transitions rely on DynamoDB conditional writes, not broker ordering.
 
@@ -50,4 +50,3 @@ Race conditions: all status updates include expected previous state and incremen
 **Common mistakes:** claiming exactly-once; missing terminal-state rules.
 
 **Implementation handoff:** developers know which operations need conditional writes and duplicate detection.
-

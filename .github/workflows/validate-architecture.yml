@@ -37,4 +37,5 @@ jobs:
         run: npm ci
       - name: Validate architecture
         run: npm run validate
-
+      - name: Validate diagrams
+        run: npm run diagrams

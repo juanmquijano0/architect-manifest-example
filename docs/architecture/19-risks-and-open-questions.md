@@ -7,14 +7,14 @@
 | ID | Assumption | Validation path |
 | --- | --- | --- |
 | ASM-001 | Product Catalog can respond within the latency budget for most requests. | Contract/performance validation with catalog owner. |
-| ASM-002 | Notification Provider supports idempotent notification requests or duplicate suppression keys. | Provider documentation review. |
+| ASM-002 | Notification Provider supports idempotent notification requests or duplicate suppression keys. Without this, retries after worker crash can create duplicate customer notifications. | Provider documentation review before production provider selection. |
 
 ### Open Questions
 
 | ID | Question | Why it matters | Owner role | Blocking | Target stage |
 | --- | --- | --- | --- | --- | --- |
 | OPEN-001 | What is the real notification provider rate limit per environment? | Determines max concurrency and retry policy. | Platform/SRE | Non-blocking for V1 docs | Before load test |
-| OPEN-002 | What retention period is required for completed orders? | Affects storage, cost and compliance. | Product/Business | Non-blocking for example | Before production design |
+| OPEN-002 | What retention period is required for completed orders? | The example uses 400 days only as an illustrative assumption; real retention affects storage, cost and compliance. | Product/Business | Non-blocking for example | Before production design |
 
 ### Risks
 
@@ -39,4 +39,3 @@
 **Common mistakes:** no owner; blocking status unclear; using risks to avoid decisions.
 
 **Implementation handoff:** implementers know what is safe to assume and what needs escalation.
-

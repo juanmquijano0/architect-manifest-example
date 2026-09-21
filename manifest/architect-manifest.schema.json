@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.acme-retail.test/orderflow/architect-manifest.schema.json",
+  "title": "Architect Manifest Index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "solution",
+    "owners",
+    "domain",
+    "repositoryPurpose",
+    "lastReviewed",
+    "documents",
+    "diagrams",
+    "adrs",
+    "apis",
+    "events",
+    "dataStores",
+    "components",
+    "qualityAttributes",
+    "openQuestions",
+    "risks",
+    "implementationConstraints"
+  ],
+  "properties": {
+    "manifestVersion": { "type": "string" },
+    "solution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "owners": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ownedRole" },
+      "minItems": 1
+    },
+    "domain": { "type": "string" },
+    "repositoryPurpose": { "type": "string" },
+    "lastReviewed": { "type": "string" },
+    "documents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "minItems": 1
+    },
+    "diagrams": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "minItems": 1
+    },
+    "adrs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/statusArtifact" },
+      "minItems": 1
+    },
+    "apis": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "minItems": 1
+    },
+    "events": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "minItems": 1
+    },
+    "dataStores": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "minItems": 1
+    },
+    "components": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "minItems": 1
+    },
+    "qualityAttributes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "minItems": 1
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/openQuestion" }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/risk" }
+    },
+    "implementationConstraints": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "ownedRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "responsibility"],
+      "properties": {
+        "role": { "type": "string" },
+        "responsibility": { "type": "string" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "path"],
+      "properties": {
+        "id": { "type": "string", "minLength": 3 },
+        "title": { "type": "string" },
+        "path": { "type": "string" },
+        "related": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "statusArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "path", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 3 },
+        "title": { "type": "string" },
+        "path": { "type": "string" },
+        "status": { "type": "string" },
+        "related": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "openQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "question", "ownerRole", "blocking", "targetResolutionStage", "path"],
+      "properties": {
+        "id": { "type": "string" },
+        "question": { "type": "string" },
+        "ownerRole": { "type": "string" },
+        "blocking": { "type": "boolean" },
+        "targetResolutionStage": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "impact", "likelihood", "mitigation", "ownerRole", "related", "path"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "impact": { "type": "string" },
+        "likelihood": { "type": "string" },
+        "mitigation": { "type": "string" },
+        "ownerRole": { "type": "string" },
+        "related": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    }
+  }
+}
