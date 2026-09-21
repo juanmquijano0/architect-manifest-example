@@ -1,0 +1,6 @@
+{
+  "code": "CATALOG_UNAVAILABLE",
+  "message": "Product Catalog API did not respond within the required budget.",
+  "correlationId": "corr_abc"
+}
+

@@ -1,0 +1,10 @@
+# Fictitious ownership placeholders for this public example.
+# Replace these with real GitHub teams in a real repository.
+
+* @acme-retail-example/solution-architecture
+/contracts/ @acme-retail-example/tech-leads
+/docs/architecture/09-data-architecture.md @acme-retail-example/data-specialists
+/docs/architecture/13-security.md @acme-retail-example/security
+/docs/architecture/14-observability.md @acme-retail-example/platform-sre
+/docs/architecture/15-deployment-and-infrastructure.md @acme-retail-example/platform-sre
+

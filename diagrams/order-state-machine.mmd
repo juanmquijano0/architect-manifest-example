@@ -1,0 +1,8 @@
+stateDiagram-v2
+  [*] --> RECEIVED: POST /orders accepted
+  RECEIVED --> PROCESSING: Fulfillment worker starts
+  PROCESSING --> FULFILLED: Fulfillment succeeds
+  PROCESSING --> REJECTED: Fulfillment rejects
+  FULFILLED --> [*]
+  REJECTED --> [*]
+

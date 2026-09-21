@@ -1,0 +1,17 @@
+{
+  "orderId": "ord_01HXYZ",
+  "status": "RECEIVED",
+  "createdAt": "2026-09-21T10:15:00Z",
+  "updatedAt": "2026-09-21T10:15:00Z",
+  "items": [
+    {
+      "productId": "sku_100",
+      "quantity": 2,
+      "productSnapshot": {
+        "name": "Everyday Backpack",
+        "category": "bags"
+      }
+    }
+  ]
+}
+

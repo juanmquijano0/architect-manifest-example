@@ -1,0 +1,22 @@
+flowchart LR
+  client["Client"]
+  gateway["API Gateway\nHTTP entry"]
+  api["CMP-ORDER-API\nECS/Fargate stateless service"]
+  catalog["Product Catalog API"]
+  db[("DATA-ORDERS\nDynamoDB table + stream")]
+  stream["DynamoDB Streams"]
+  publisher["CMP-OUTBOX-PUBLISHER\nStream consumer"]
+  bus["EventBridge\nDomain event bus"]
+  fq[("Fulfillment SQS Queue\nwith DLQ")]
+  nq[("Notification SQS Queue\nwith DLQ")]
+  fulfillment["CMP-FULFILLMENT-WORKER\nECS/Fargate worker"]
+  notification["CMP-NOTIFICATION-WORKER\nECS/Fargate worker"]
+  provider["Notification Provider"]
+
+  client --> gateway --> api
+  api --> catalog
+  api --> db
+  db --> stream --> publisher --> bus
+  bus --> fq --> fulfillment --> db
+  bus --> nq --> notification --> provider
+

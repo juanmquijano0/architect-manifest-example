@@ -1,0 +1,30 @@
+# 03. Quality Attributes
+
+Los valores son ilustrativos del ejemplo, no universales.
+
+| ID | Statement | Metric | Target | Measurement point | Validation | Owner | Related |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| NFR-AVAILABILITY-001 | Order API SHOULD remain available during single task failure. | Monthly availability | 99.9% | API Gateway 5xx excluding client errors | Synthetic checks and CloudWatch alarms | Platform/SRE | CMP-ORDER-API |
+| NFR-PERF-001 | Create order response SHOULD be fast because fulfillment is async. | p95 latency | <= 350 ms excluding catalog latency budget | API Gateway + service trace | Load test | Tech Lead | API-ORDERS-V1 |
+| NFR-PERF-002 | Accepted orders SHOULD begin fulfillment quickly. | Age of oldest message | <= 120 s p95 | fulfillment queue | Queue metric alarm | SRE | CMP-FULFILLMENT-WORKER |
+| NFR-DURABILITY-001 | Accepted orders MUST not be lost after successful persistence. | DynamoDB write durability | AWS regional service guarantee | DynamoDB | PITR enabled and write audit | Platform | DATA-ORDERS |
+| NFR-SEC-001 | APIs MUST require authenticated callers. | Unauthorized access rate | 0 successful unauthenticated requests | API Gateway authorizer | Contract/security tests | Security | API-ORDERS-V1 |
+| NFR-OBS-001 | Each order flow MUST be traceable end to end. | Trace/log correlation coverage | >= 95% sampled flows with correlationId | OpenTelemetry traces/logs | Observability tests | SRE | all components |
+| NFR-COST-001 | Scaling SHOULD protect downstream dependencies and cost. | Max worker tasks | Environment-specific cap documented | ECS service | Capacity review | Platform/SRE | workers |
+
+## How To Use This In A Real Project
+
+**Purpose:** transformar atributos vagos en objetivos medibles.
+
+**What belongs here:** statement, metrica, target, punto de medicion, validacion, owner y componentes relacionados.
+
+**What does NOT belong here:** "alta disponibilidad" sin numero o targets inventados como promesa contractual.
+
+**Owner / reviewers:** Solution Architect coordina; SRE, Security, Tech Lead y Product validan.
+
+**When required:** `REQUIRED`.
+
+**Common mistakes:** poner targets sin forma de medirlos; mezclar SLOs de usuario con metricas internas sin relacion.
+
+**Implementation handoff:** el equipo conoce que tests y alarmas demuestran que la arquitectura se cumple.
+

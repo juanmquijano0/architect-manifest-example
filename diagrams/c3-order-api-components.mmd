@@ -1,0 +1,21 @@
+flowchart TB
+  gateway["API Gateway"]
+  controller["OrderController"]
+  telemetry["TelemetryMiddleware"]
+  create["CreateOrderUseCase"]
+  get["GetOrderUseCase"]
+  catalog["CatalogClient"]
+  idem["IdempotencyService"]
+  repo["OrderRepository"]
+  externalCatalog["Product Catalog API"]
+  dynamo[("DATA-ORDERS")]
+
+  gateway --> telemetry --> controller
+  controller --> create
+  controller --> get
+  create --> catalog --> externalCatalog
+  create --> idem --> repo
+  create --> repo
+  get --> repo
+  repo --> dynamo
+

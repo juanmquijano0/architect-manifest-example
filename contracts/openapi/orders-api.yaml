@@ -1,0 +1,301 @@
+openapi: 3.0.3
+info:
+  title: OrderFlow Orders API
+  version: 1.0.0
+  description: Public HTTP contract for creating and reading orders in the fictitious Acme Retail OrderFlow system.
+servers:
+  - url: https://api.example.acme-retail.test/orderflow/v1
+security:
+  - oidc: []
+tags:
+  - name: Orders
+paths:
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [Orders]
+      summary: Create an order
+      description: Creates an order after validating product references with Product Catalog API.
+      security:
+        - oidc:
+            - orders:write
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            examples:
+              basic:
+                value:
+                  items:
+                    - productId: sku_100
+                      quantity: 2
+      responses:
+        '201':
+          description: Order accepted.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+              examples:
+                created:
+                  value:
+                    orderId: ord_01HXYZ
+                    status: RECEIVED
+                    createdAt: '2026-09-21T10:15:00Z'
+                    updatedAt: '2026-09-21T10:15:00Z'
+                    items:
+                      - productId: sku_100
+                        quantity: 2
+                        productSnapshot:
+                          name: Everyday Backpack
+                          category: bags
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Idempotency key was reused with a different request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                reused:
+                  value:
+                    code: IDEMPOTENCY_KEY_REUSED
+                    message: Idempotency-Key was already used with a different request body.
+                    correlationId: corr_abc
+        '422':
+          description: Product validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidProduct:
+                  value:
+                    code: PRODUCT_NOT_FOUND
+                    message: One or more products do not exist.
+                    correlationId: corr_abc
+        '503':
+          description: Required dependency is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                catalogUnavailable:
+                  value:
+                    code: CATALOG_UNAVAILABLE
+                    message: Product Catalog API did not respond within the required budget.
+                    correlationId: corr_abc
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      tags: [Orders]
+      summary: Get an order by ID
+      security:
+        - oidc:
+            - orders:read
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^ord_[A-Za-z0-9]+$'
+      responses:
+        '200':
+          description: Current order state.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Order not found or not visible to caller.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  value:
+                    code: ORDER_NOT_FOUND
+                    message: Order was not found.
+                    correlationId: corr_abc
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://identity.example.acme-retail.test/.well-known/openid-configuration
+  parameters:
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+      description: Caller-provided correlation ID. Generated by Order API when absent.
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+      description: Required for retry-safe order creation.
+  headers:
+    CorrelationId:
+      description: Correlation ID used for logs, traces and events.
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Request shape or validation error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid authentication token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized:
+              value:
+                code: UNAUTHENTICATED
+                message: Authentication is required.
+                correlationId: corr_abc
+    Forbidden:
+      description: Authenticated caller lacks required scope or resource access.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            forbidden:
+              value:
+                code: FORBIDDEN
+                message: Caller is not allowed to access this resource.
+                correlationId: corr_abc
+  schemas:
+    CreateOrderRequest:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CreateOrderItem'
+    CreateOrderItem:
+      type: object
+      additionalProperties: false
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: string
+          minLength: 1
+          maxLength: 64
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 99
+    OrderResponse:
+      type: object
+      additionalProperties: false
+      required: [orderId, status, createdAt, updatedAt, items]
+      properties:
+        orderId:
+          type: string
+          pattern: '^ord_[A-Za-z0-9]+$'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        rejectionReason:
+          type: string
+          nullable: true
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    OrderItem:
+      type: object
+      additionalProperties: false
+      required: [productId, quantity, productSnapshot]
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+        productSnapshot:
+          $ref: '#/components/schemas/ProductSnapshot'
+    ProductSnapshot:
+      type: object
+      additionalProperties: false
+      required: [name, category]
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+    OrderStatus:
+      type: string
+      enum: [RECEIVED, PROCESSING, FULFILLED, REJECTED]
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, correlationId]
+      properties:
+        code:
+          type: string
+          enum:
+            - INVALID_REQUEST
+            - UNAUTHENTICATED
+            - FORBIDDEN
+            - IDEMPOTENCY_KEY_REUSED
+            - PRODUCT_NOT_FOUND
+            - CATALOG_UNAVAILABLE
+            - ORDER_NOT_FOUND
+            - INTERNAL_ERROR
+        message:
+          type: string
+        correlationId:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+

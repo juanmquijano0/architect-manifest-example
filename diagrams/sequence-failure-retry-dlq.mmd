@@ -1,0 +1,20 @@
+sequenceDiagram
+  autonumber
+  participant Q as Worker Queue
+  participant W as Worker
+  participant D as DynamoDB Orders
+  participant DLQ as Dead Letter Queue
+  participant CW as CloudWatch Alarm
+  participant Ops as Operator
+
+  Q->>W: Deliver message attempt 1
+  W->>D: Conditional write begins
+  W--xW: Crash or retryable failure
+  Q-->>Q: Visibility timeout expires
+  Q->>W: Redeliver message attempts 2..5
+  W--xW: Fails repeatedly
+  Q->>DLQ: Redrive after max receives
+  DLQ->>CW: Visible messages > 0
+  CW->>Ops: Notify owner role
+  Ops->>DLQ: Inspect, fix, replay or archive with audit note
+

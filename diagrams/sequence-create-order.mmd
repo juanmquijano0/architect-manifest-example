@@ -1,0 +1,23 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant G as API Gateway
+  participant A as Order API
+  participant P as Product Catalog API
+  participant D as DynamoDB Orders
+  participant S as DynamoDB Streams
+  participant O as Outbox Publisher
+  participant E as EventBridge
+
+  C->>G: POST /orders + JWT + Idempotency-Key
+  G->>A: Authorized request + correlation context
+  A->>A: Validate request and idempotency key
+  A->>P: GET product snapshots
+  P-->>A: Product data
+  A->>D: Conditional transaction: order + items + idempotency record
+  D-->>A: Persisted
+  A-->>C: 201 Created
+  D-->>S: Stream record
+  S->>O: Order persisted change
+  O->>E: Publish order.created.v1
+

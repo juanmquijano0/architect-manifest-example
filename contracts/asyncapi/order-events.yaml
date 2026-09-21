@@ -1,0 +1,61 @@
+asyncapi: 2.6.0
+id: urn:acme-retail:orderflow:events
+info:
+  title: OrderFlow Domain Events
+  version: 1.0.0
+  description: Domain events emitted by the fictitious Acme Retail OrderFlow system.
+  contact:
+    name: Acme Retail Architecture Example
+  license:
+    name: CC0-1.0
+defaultContentType: application/json
+tags:
+  - name: orderflow
+    description: Fictitious OrderFlow domain events.
+servers:
+  production:
+    url: arn:aws:events:us-east-1:123456789012:event-bus/orderflow-domain
+    protocol: aws.eventbridge
+    description: Illustrative EventBridge bus ARN for the example.
+channels:
+  order.created.v1:
+    description: Published after an order is persisted as RECEIVED.
+    publish:
+      operationId: publishOrderCreatedV1
+      message:
+        $ref: '#/components/messages/OrderCreatedV1'
+  order.fulfilled.v1:
+    description: Published when fulfillment succeeds.
+    publish:
+      operationId: publishOrderFulfilledV1
+      message:
+        $ref: '#/components/messages/OrderFulfilledV1'
+  order.rejected.v1:
+    description: Published when fulfillment rejects an order.
+    publish:
+      operationId: publishOrderRejectedV1
+      message:
+        $ref: '#/components/messages/OrderRejectedV1'
+components:
+  messages:
+    OrderCreatedV1:
+      messageId: EVT-ORDER-CREATED-V1
+      name: order.created.v1
+      title: Order created
+      contentType: application/json
+      payload:
+        $ref: '../schemas/order-created.v1.schema.json'
+    OrderFulfilledV1:
+      messageId: EVT-ORDER-FULFILLED-V1
+      name: order.fulfilled.v1
+      title: Order fulfilled
+      contentType: application/json
+      payload:
+        $ref: '../schemas/order-fulfilled.v1.schema.json'
+    OrderRejectedV1:
+      messageId: EVT-ORDER-REJECTED-V1
+      name: order.rejected.v1
+      title: Order rejected
+      contentType: application/json
+      payload:
+        $ref: '../schemas/order-rejected.v1.schema.json'

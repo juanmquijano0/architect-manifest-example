@@ -1,0 +1,16 @@
+{
+  "eventId": "evt_fulfilled_001",
+  "eventType": "order.fulfilled.v1",
+  "eventVersion": "1",
+  "occurredAt": "2026-09-21T10:16:01Z",
+  "correlationId": "corr_abc",
+  "causationId": "evt_created_001",
+  "aggregateId": "ord_01HXYZ",
+  "producer": "CMP-FULFILLMENT-WORKER",
+  "data": {
+    "orderId": "ord_01HXYZ",
+    "status": "FULFILLED",
+    "fulfilledAt": "2026-09-21T10:16:01Z"
+  }
+}
+

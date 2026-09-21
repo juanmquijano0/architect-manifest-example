@@ -1,0 +1,26 @@
+{
+  "eventId": "evt_created_001",
+  "eventType": "order.created.v1",
+  "eventVersion": "1",
+  "occurredAt": "2026-09-21T10:15:01Z",
+  "correlationId": "corr_abc",
+  "causationId": "req_123",
+  "aggregateId": "ord_01HXYZ",
+  "producer": "CMP-ORDER-API",
+  "data": {
+    "orderId": "ord_01HXYZ",
+    "status": "RECEIVED",
+    "createdAt": "2026-09-21T10:15:00Z",
+    "items": [
+      {
+        "productId": "sku_100",
+        "quantity": 2,
+        "productSnapshot": {
+          "name": "Everyday Backpack",
+          "category": "bags"
+        }
+      }
+    ]
+  }
+}
+

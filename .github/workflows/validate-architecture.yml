@@ -1,0 +1,40 @@
+name: Validate architecture
+
+on:
+  push:
+    paths:
+      - '**/*.md'
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '**/*.json'
+      - '**/*.mmd'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    paths:
+      - '**/*.md'
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '**/*.json'
+      - '**/*.mmd'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate architecture
+        run: npm run validate
+

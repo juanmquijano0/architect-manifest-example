@@ -1,0 +1,37 @@
+flowchart TB
+  subgraph aws["AWS Account / Environment"]
+    subgraph edge["Public entry boundary"]
+      apigw["API Gateway"]
+    end
+    subgraph compute["Private compute boundary"]
+      orderApi["ECS Service: Order API"]
+      outbox["ECS Task: Outbox Publisher"]
+      fulfill["ECS Service: Fulfillment Worker"]
+      notify["ECS Service: Notification Worker"]
+    end
+    dynamo[("DynamoDB Orders\nStreams enabled")]
+    eventbridge["EventBridge Bus"]
+    fulfillQ[("Fulfillment Queue + DLQ")]
+    notifyQ[("Notification Queue + DLQ")]
+    secrets["Secrets Manager"]
+    kms["KMS Keys"]
+    iam["IAM Roles"]
+    obs["CloudWatch / OpenTelemetry"]
+  end
+
+  internet["Authenticated Client"] --> apigw --> orderApi
+  orderApi --> dynamo
+  dynamo --> outbox --> eventbridge
+  eventbridge --> fulfillQ --> fulfill --> dynamo
+  eventbridge --> notifyQ --> notify
+  orderApi --> secrets
+  notify --> secrets
+  iam -. authorizes .- orderApi
+  iam -. authorizes .- fulfill
+  iam -. authorizes .- notify
+  kms -. encrypts .- dynamo
+  kms -. encrypts .- secrets
+  orderApi --> obs
+  fulfill --> obs
+  notify --> obs
+

@@ -1,0 +1,12 @@
+flowchart LR
+  customer["Customer\nAuthenticated client"]
+  orderflow["OrderFlow\nOrder processing system"]
+  catalog["Product Catalog API\nExternal product validation"]
+  notification["Notification Provider\nExternal message delivery"]
+  obs["Observability Platform\nLogs, metrics, traces"]
+
+  customer -->|"Creates and reads orders over HTTPS"| orderflow
+  orderflow -->|"Validates product existence over REST"| catalog
+  orderflow -->|"Sends terminal-state notifications"| notification
+  orderflow -->|"Emits telemetry"| obs
+

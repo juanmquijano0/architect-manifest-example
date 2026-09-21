@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.acme-retail.test/orderflow/schemas/order-rejected.v1.schema.json",
+  "title": "order.rejected.v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["eventId", "eventType", "eventVersion", "occurredAt", "correlationId", "causationId", "aggregateId", "producer", "data"],
+  "properties": {
+    "eventId": { "type": "string", "minLength": 1 },
+    "eventType": { "const": "order.rejected.v1" },
+    "eventVersion": { "const": "1" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "causationId": { "type": "string", "minLength": 1 },
+    "aggregateId": { "type": "string", "pattern": "^ord_[A-Za-z0-9]+$" },
+    "producer": { "const": "CMP-FULFILLMENT-WORKER" },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["orderId", "status", "rejectedAt", "reasonCode"],
+      "properties": {
+        "orderId": { "type": "string" },
+        "status": { "const": "REJECTED" },
+        "rejectedAt": { "type": "string", "format": "date-time" },
+        "reasonCode": {
+          "type": "string",
+          "enum": ["FULFILLMENT_RULE_FAILED", "PRODUCT_NO_LONGER_AVAILABLE", "UNKNOWN"]
+        }
+      }
+    }
+  }
+}
+
